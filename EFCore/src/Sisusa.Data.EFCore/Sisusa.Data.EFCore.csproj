@@ -4,14 +4,28 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageTags>Repository;Sisusa;</PackageTags>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/itmathsteacher20/Sisusa.Data</RepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>Abstractions over EF using Repository pattern.
+Personal projects.</Description>
+    <Title>An EF core based Repository pattern implementation you do not need.</Title>
+    <Copyright>Copyright 2024, T.Dlamini</Copyright>
+	<Version>1.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
+    <PackageReference Include="Sisusa.Data.Contracts" Version="1.0.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Contracts\src\Sisusa.Data.Contracts\Sisusa.Data.Contracts.csproj" />
+    <None Update="README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
