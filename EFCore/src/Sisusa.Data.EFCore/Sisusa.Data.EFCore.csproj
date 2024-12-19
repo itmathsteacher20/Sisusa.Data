@@ -13,7 +13,7 @@
 Personal projects.</Description>
     <Title>An EF core based Repository pattern implementation you do not need.</Title>
     <Copyright>Copyright 2024, T.Dlamini</Copyright>
-	<Version>1.0.1</Version>
+	<Version>1.2.1</Version>
   </PropertyGroup>
 
   <ItemGroup>

@@ -5,6 +5,12 @@ using Sisusa.Data.EFCore.Exceptions;
 
 namespace Sisusa.Data.EFCore;
 
+/// <inheritdoc cref="IRepository{T, TId}"/>
+/// <summary>
+/// A strongly typed repository implementation
+/// </summary>
+/// <typeparam name="TEntity">The type of entities contained in the repository</typeparam>
+/// <typeparam name="TId">The key type</typeparam>
 public class SimpleRepository<TEntity, TId> : IRepository<TEntity, TId> where TEntity : class
 {
     private readonly DataSourceContext _context;

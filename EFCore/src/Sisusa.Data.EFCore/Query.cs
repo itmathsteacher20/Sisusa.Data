@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using Sisusa.Data.Contracts;
+using Microsoft.EntityFrameworkCore.Query;
 
 namespace Sisusa.Data.EFCore;
 
@@ -25,6 +26,7 @@ public class Query<TEntity> where TEntity : class
 {
     private IQueryable<TEntity> _query;
     private readonly List<ResultOrdering<TEntity, object>> _resultOrdering;
+    private bool _returnDistinct;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Query{TEntity}"/> class using a data source context.
@@ -33,7 +35,7 @@ public class Query<TEntity> where TEntity : class
     private Query(DataSourceContext context)
     {
         _query = context.Entities<TEntity>();
-        _resultOrdering = new List<ResultOrdering<TEntity, object>>();
+        _resultOrdering = [];
     }
 
     /// <summary>
@@ -43,7 +45,7 @@ public class Query<TEntity> where TEntity : class
     private Query(IQueryable<TEntity> query)
     {
         _query = query;
-        _resultOrdering = new List<ResultOrdering<TEntity, object>>();
+        _resultOrdering = [];
     }
 
     /// <summary>
@@ -129,6 +131,43 @@ public class Query<TEntity> where TEntity : class
         return this;
     }
 
+
+    /// <summary>
+    /// Adds a ThenInclude clause to the query for a specified sub-entity navigation property.
+    /// </summary>
+    /// <typeparam name="TPreviousProperty">The type of the previous navigation property.</typeparam>
+    /// <typeparam name="TNextProperty">The type of the next navigation property.</typeparam>
+    /// <param name="subEntityPath">An expression specifying the sub-entity navigation property to include.</param>
+    /// <returns>The current <see cref="Query{TEntity}"/> instance with the ThenInclude clause applied.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="subEntityPath"/> is null.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the current query is not in an includable state. Ensure the main property is included first.
+    /// </exception>
+    public Query<TEntity> ThenIncludeSubEntity<TPreviousProperty, TNextProperty>(
+        Expression<Func<TPreviousProperty, TNextProperty>> subEntityPath)
+    {
+        ArgumentNullException.ThrowIfNull(subEntityPath);
+
+        if (_query is IIncludableQueryable<TEntity, TPreviousProperty> includable)
+        {
+            _query = includable.ThenInclude(subEntityPath);
+        }
+        else
+        {
+            throw new InvalidOperationException("Query is not in includable state. Include main property first");
+        }
+
+        return this;
+    }
+
+
+    public Query<TEntity> RemoveDuplicateResults()
+    {
+        _returnDistinct = true;
+        return this;
+    }
+
+
     /// <summary>
     /// Projects the query results to a new type.
     /// </summary>
@@ -166,6 +205,7 @@ public class Query<TEntity> where TEntity : class
     /// <returns>An <see cref="IQueryable{T}"/> of the results.</returns>
     public IQueryable<TEntity> GetCompiledAsNoTracking()
     {
+        
         return CompileQuery(_query).AsNoTracking();
     }
 
@@ -197,8 +237,9 @@ public class Query<TEntity> where TEntity : class
                     : orderedQuery.ThenByDescending(resultOrdering.Key);
             }
         }
-
-        return theQuery;
+        return _returnDistinct ? 
+            theQuery.Distinct() : 
+            theQuery;
     }
 }
 

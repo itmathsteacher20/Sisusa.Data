@@ -23,29 +23,42 @@ The framework revolves around three key interfaces and a central manager:
 
 ### **1. IWriteCommand**
 Represents a database write operation.
+Perfect for operations that involve some complex logic/workflow.
+
+### Methods:
+- **`Execute()`** 
+ Performs the write operation synchronously.
+
+#### **1.2. IWriteAsyncCommand**
+For when the operation has to be done asynchronously
 
 #### Methods:
-- **`Execute(IDataSourceContext context)`**  
-  Performs the write operation synchronously.
-
-- **`ExecuteAsync(IDataSourceContext context)`**  
+- **`ExecuteAsync()`**
   Performs the write operation asynchronously.
 
 #### Example:
 ```csharp
-public class AddUserCommand : IWriteCommand
+public class AddUserCommand(IDataSourceContext context) : IWriteCommand
 {
     private readonly User _user;
 
     public AddUserCommand(User user) => _user = user;
 
-    public void Execute(IDataSourceContext context)
+    public void Execute()
     {
         context.Users.Add(_user);
+        //create accounts or some other complex logic
         context.SaveChanges();
     }
+}
 
-    public async Task ExecuteAsync(IDataSourceContext context)
+public class AddUserAsyncCommand(IDataSourceContext context) : IWriteAsyncCommand
+{
+    private readonly User _user;
+
+    public AddUserCommand(User user) => _user = user;
+
+    public Task ExecuteAsync()
     {
         context.Users.Add(_user);
         await context.SaveChangesAsync();
@@ -55,55 +68,52 @@ public class AddUserCommand : IWriteCommand
 
 ---
 
-### **2. IReadManyCommand<T>**
+### **2. IReadCommand
+Represents a database operation that reads and returns a results.
+
+Similar to the `IWriteCommand`, comes in two interfaces `IReadCommand` and `IReadAsyncCommand` with a key difference being that type parameters are introduced so that we now have
+`IReadSingleEntityCommand<TEntity> where TEntity:class`, `IReadManyEntitiesCommand<TEntity> where TEntity:class`, `IReadSingleEntityAsyncCommand<TEntity>` and `IReadManyEntitiesAsyncCommand<TEntity>`.
+
+Which can be used depending on the use-case.
+
+#### **2.1.** IReadManyEntitiesAsyncCommand<TEntity>
 Represents a database read operation that retrieves multiple records.
 
 #### Methods:
-- **`IEnumerable<T> Execute(IDataSourceContext context)`**  
+- **`Task<IEnumerable<T>> Execute()`**  
   Retrieves data synchronously.
-
-- **`Task<IEnumerable<T>> ExecuteAsync(IDataSourceContext context)`**  
-  Retrieves data asynchronously.
 
 #### Example:
 ```csharp
-public class GetActiveUsersCommand : IReadManyCommand<User>
+public class GetActiveUsersCommand : IReadManyEntitiesCommand<User> 
 {
     public IEnumerable<User> Execute(IDataSourceContext context)
     {
         return context.Users.Where(u => u.IsActive).ToList();
-    }
-
-    public async Task<IEnumerable<User>> ExecuteAsync(IDataSourceContext context)
-    {
-        return await context.Users.Where(u => u.IsActive).ToListAsync();
     }
 }
 ```
 
 ---
 
-### **3. IReadSingleCommand<T>**
+### **3. IReadSingleEntityAsyncCommand<T>**
 Represents a database read operation that retrieves a single record.
 
 #### Methods:
-- **`T? Execute(IDataSourceContext context)`**  
-  Retrieves a single record synchronously.
-
-- **`Task<T?> ExecuteAsync(IDataSourceContext context)`**  
+- **`T? ExecuteAsync()`**  
   Retrieves a single record asynchronously.
 
 #### Example:
 ```csharp
-public class GetUserByIdCommand : IReadSingleCommand<User>
+public class GetUserByIdCommand : IReadSingleEntityAsyncCommand<User>
 {
     private readonly int _userId;
 
     public GetUserByIdCommand(int userId) => _userId = userId;
 
-    public User? Execute(IDataSourceContext context)
+    public User? ExecuteAsync()
     {
-        return context.Users.FirstOrDefault(u => u.Id == _userId);
+        return await context.Users.FirstOrDefaultAsync(u => u.Id == _userId);
     }
 
     public async Task<User?> ExecuteAsync(IDataSourceContext context)
@@ -129,8 +139,11 @@ The `DataCommandManager` handles the execution of multiple read and write comman
 #### **QueueWriteCommand(IWriteCommand command)**
 Adds a write command to the queue.
 
+#### **QueAsyncWriteCommand(IWriteAsyncCommand command)**
+Adds an async write command to the queue.
+
 #### **QueueReadCommand<T>(object readCmd)**
-Adds a read command to the queue. Validates that the command implements either `IReadManyCommand<T>` or `IReadSingleCommand<T>`.
+Adds a read command to the queue.
 
 #### **TryExecuteWritesAsync(IDataSourceContext dbContext)**
 Executes all queued write commands asynchronously within a transaction.
@@ -141,8 +154,6 @@ Executes all queued write commands synchronously within a transaction.
 #### **TryExecuteReadsAsync(IDataSourceContext dataSourceContext)**
 Executes all queued read commands asynchronously and retrieves the results.
 
-#### **TryExecuteReads(IDataSourceContext dbContext)**
-Executes all queued read commands synchronously and retrieves the results.
 
 ---
 

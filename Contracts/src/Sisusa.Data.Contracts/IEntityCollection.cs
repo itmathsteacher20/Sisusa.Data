@@ -147,7 +147,6 @@ namespace Sisusa.Data.Contracts
         /// <param name="keyValues">The key values of the entity to find.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the entity found, or <c>null</c> if no such entity is found.</returns>
         public Task<TEntity?> FindAsync(params object[] keyValues);
-
     }
 }
 

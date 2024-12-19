@@ -6,8 +6,11 @@ namespace Sisusa.Data.Contracts
     /// </summary>
     public class DataCommandManager
     {
-        private readonly Queue<IWriteCommand> _writeCommands = new();
-        private readonly Queue<object> _readCommands = new();
+        //private readonly Queue<IWriteCommand> _writeCommands = new();
+       // private readonly Queue<IReadCommand> _readCommands = new();
+
+        private readonly List<object> _writeCommands = [];
+        private readonly List<object> _readCommands = [];
 
         /// <summary>
         /// Adds a write command to the queue for later execution.
@@ -16,7 +19,16 @@ namespace Sisusa.Data.Contracts
         public void QueueWriteCommand(IWriteCommand command)
         {
             ArgumentNullException.ThrowIfNull(command, nameof(command));
-            _writeCommands.Enqueue(command);
+            if (command is not IWriteCommand && command is not IWriteAsyncCommand)
+                throw new ArgumentException("Argument should be instance of the Write commands.", nameof(command));
+            _writeCommands.Add(command);
+        }
+
+        public void QueueWriteAsyncCommand(IWriteAsyncCommand writeAsyncCommand)
+        {
+            ArgumentNullException.ThrowIfNull(writeAsyncCommand, nameof(writeAsyncCommand));
+
+            _writeCommands.Add(writeAsyncCommand);
         }
 
         /// <summary>
@@ -27,16 +39,33 @@ namespace Sisusa.Data.Contracts
         /// <param name="readCmd">The read command to queue.</param>
         /// <exception cref="ArgumentNullException">Thrown when the provided command is <c>null</c>.</exception>
         /// <exception cref="ArgumentException">Thrown when the command is not a valid read command type.</exception>
-        public void QueueReadCommand<T>(object readCmd) where T : class
+        public void QueueReadCommand<T>(IReadCommand readCmd) where T : class
         {
             ArgumentNullException.ThrowIfNull(readCmd, nameof(readCmd));
-            if (readCmd is not IReadManyCommand<T> && readCmd is not IReadSingleCommand<T>)
-                throw new ArgumentException(
-                    "Queued command must be an implementation of a valid ReadCommand interface.",
-                    nameof(readCmd)
-                    );
 
-            _readCommands.Enqueue(readCmd);
+            _readCommands.Add(readCmd);
+        }
+
+        public void QueueAsyncReadCommand<T>(IReadAsyncCommand readCmd) where T : class
+        {
+            ArgumentNullException.ThrowIfNull(readCmd);
+            _readCommands.Add(readCmd);
+        }
+
+        private async void PerformWrites()
+        {
+            foreach (var command in _writeCommands)
+            {
+                if (command is IWriteAsyncCommand asyncCmd)
+                {
+                    await asyncCmd.ExecuteAsync();
+                }
+                if (command is IWriteCommand writeCmd)
+                {
+                    writeCmd.Execute();
+                }
+
+            }
         }
 
         /// <summary>
@@ -48,14 +77,10 @@ namespace Sisusa.Data.Contracts
         public async Task TryExecuteWritesAsync(IDataSourceContext dbContext)
         {
             ArgumentNullException.ThrowIfNull(dbContext, nameof(dbContext));
-            using var transact = dbContext.BeginTransaction();
+            using var transact = await dbContext.BeginTransactionAsync();
             try
             {
-                while (_writeCommands.Count != 0)
-                {
-                    var writeCmd = _writeCommands.Dequeue();
-                    await writeCmd.ExecuteAsync(dbContext);
-                }
+                PerformWrites();
                 transact.Commit();
             }
             catch
@@ -77,11 +102,7 @@ namespace Sisusa.Data.Contracts
             using var transact = dbContext.BeginTransaction();
             try
             {
-                while (_writeCommands.Count != 0)
-                {
-                    var writeCmd = _writeCommands.Dequeue();
-                    writeCmd.Execute(dbContext);
-                }
+                PerformWrites();
                 transact.Commit();
             }
             catch
@@ -91,52 +112,44 @@ namespace Sisusa.Data.Contracts
             }
         }
 
-        /// <summary>
-        /// Executes all queued read commands synchronously within a database transaction and retrieves the results.
-        /// </summary>
-        /// <param name="dbContext">The database context to execute commands against.</param>
-        /// <returns>A collection of objects read by the commands.</returns>
-        /// <exception cref="Exception">Rethrows any exceptions encountered during execution.</exception>
-        /// <exception cref="ArgumentNullException">If given a null reference for dbContext.</exception>
-        public ICollection<object> TryExecuteReads(IDataSourceContext dbContext)
-        {
-            ArgumentNullException.ThrowIfNull(dbContext, nameof(dbContext));
-            using var transact = dbContext.BeginTransaction();
-            var results = new HashSet<object>();
-            try
-            {
-                while (_readCommands.Count != 0)
-                {
-                    var cmd = _readCommands.Dequeue();
-                    switch (cmd)
-                    {
-                        case IReadManyCommand<object> command:
-                        {
-                            var items = command.Execute(dbContext);
-                            foreach (var item in items)
-                            {
-                                results.Add(item);
-                            }
 
-                            break;
-                        }
-                        case IReadSingleCommand<object> single:
-                        {
-                            var item = single.Execute(dbContext);
-                            if (item != null)
-                                results.Add(item);
-                            break;
-                        }
-                    }
-                }
-                transact.Commit();
-                return results;
-            }
-            catch
+        private async Task<IEnumerable<object>> PerformReads()
+        {
+            var results = new HashSet<object>();
+
+            foreach (var cmd in _readCommands)
             {
-                transact.Rollback();
-                throw;
+                switch (cmd)
+                {
+                    case IReadSingleEntityCommand<object> readOne:
+                        var obj = readOne.Execute();
+                        if (obj != null)
+                            results.Add(obj);
+                        break;
+                    case IReadSingleEntityAsyncCommand<object> readOneAsync:
+                        obj = await readOneAsync.ExecuteAsync();
+                        if (obj != null)
+                            results.Add(obj);
+                        break;
+                    case IReadManyEntitiesCommand<object> readMany:
+                        var objs = readMany.Execute();
+                        foreach (var item in objs)
+                        {
+                            results.Add(item);
+                        }
+                        break;
+                    case IReadManyEntitiesAsyncCommand<object> readManyAsync:
+                        objs = await readManyAsync.ExecuteAsync();
+                        foreach (var item in objs)
+                        {
+                            results.Add(item);
+                        }
+                        break;
+                    default:
+                        continue;
+                }
             }
+            return results;
         }
 
         /// <summary>
@@ -146,45 +159,10 @@ namespace Sisusa.Data.Contracts
         /// <returns>A task representing the asynchronous operation. The task result contains a collection of objects read by the commands.</returns>
         /// <exception cref="Exception">Rethrows any exceptions encountered during execution.</exception>
         /// <exception cref="ArgumentNullException">If given a null reference to data context.</exception>
-        public async Task<ICollection<object>> TryExecuteReadsAsync(IDataSourceContext dataSourceContext)
+        public async Task<IEnumerable<T>> TryExecuteReadsAsync<T>(IDataSourceContext dataSourceContext) where T : class
         {
             ArgumentNullException.ThrowIfNull(dataSourceContext, nameof(dataSourceContext));
-            using var transact = dataSourceContext.BeginTransaction();
-            var results = new HashSet<object>();
-            try
-            {
-                while (_readCommands.Count != 0)
-                {
-                    var cmd = _readCommands.Dequeue();
-                    switch (cmd)
-                    {
-                        case IReadManyCommand<object> command:
-                        {
-                            var items = await command.ExecuteAsync(dataSourceContext);
-                            foreach (var item in items)
-                            {
-                                results.Add(item);
-                            }
-
-                            break;
-                        }
-                        case IReadSingleCommand<object> single:
-                        {
-                            var item = await single.ExecuteAsync(dataSourceContext);
-                            if (item != null)
-                                results.Add(item);
-                            break;
-                        }
-                    }
-                }
-                transact.Commit();
-                return results;
-            }
-            catch
-            {
-                transact.Rollback();
-                throw;
-            }
+            return await TryExecuteReadsAsync<T>(_readCommands.Select(rc=>(IReadCommand)rc).ToList(), dataSourceContext);
         }
 
         /// <summary>
@@ -196,7 +174,7 @@ namespace Sisusa.Data.Contracts
         /// <returns>A task representing the asynchronous operation. The task result contains a collection of objects read by the commands.</returns>
         /// <exception cref="Exception">Rethrows any exceptions encountered during execution.</exception>
         /// <exception cref="ArgumentNullException">If given null reference to readCommands or DataSourceContext.</exception>
-        public static async Task<IEnumerable<T>> TryExecuteReadsAsync<T>(IEnumerable<IReadCommand> readCommands, IDataSourceContext dbContext)
+        public static async Task<IEnumerable<T>> TryExecuteReadsAsync<T>(ICollection<IReadCommand> readCommands, IDataSourceContext dbContext) where T: class
         {
             ArgumentNullException.ThrowIfNull(readCommands, nameof(readCommands));
             ArgumentNullException.ThrowIfNull(dbContext, nameof(dbContext));
@@ -209,9 +187,9 @@ namespace Sisusa.Data.Contracts
                 {
                     switch (readCommand)
                     {
-                        case IReadManyCommand<T> command:
+                        case IReadManyEntitiesCommand<T> command:
                         {
-                            var items = await command.ExecuteAsync(dbContext);
+                            var items = command.Execute();
                             foreach (var item in items)
                             {
                                 results.Add(item);
@@ -219,64 +197,32 @@ namespace Sisusa.Data.Contracts
 
                             break;
                         }
-                        case IReadSingleCommand<T> single:
-                        {
-                            var item = await single.ExecuteAsync(dbContext);
-                            if (item != null)
-                                results.Add(item);
-                            break;
-                        }
-                    }
-                }
-                transaction.Commit();
-                return results;
-            }
-            catch
-            {
-                transaction.Rollback();
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Executes multiple read commands synchronously and retrieves the results.
-        /// </summary>
-        /// <typeparam name="T">The type of objects returned by the commands.</typeparam>
-        /// <param name="readCommands">The read commands to execute.</param>
-        /// <param name="dbContext">The database context to execute commands against.</param>
-        /// <returns>A collection of objects read by the commands.</returns>
-        /// <exception cref="Exception">Rethrows any exceptions encountered during execution.</exception>
-        /// <exception cref="ArgumentNullException">If given null IEnumerable or IDataSourceContext instance.</exception>
-        public static IEnumerable<T> TryExecuteReads<T>(IEnumerable<IReadCommand> readCommands, IDataSourceContext dbContext)
-        {
-            ArgumentNullException.ThrowIfNull(readCommands, nameof(readCommands));
-            ArgumentNullException.ThrowIfNull(dbContext, nameof(dbContext));
-            
-            using var transaction = dbContext.BeginTransaction();
-            var results = new HashSet<T>();
-            try
-            {
-                foreach (var readCommand in readCommands)
-                {
-                    switch (readCommand)
-                    {
-                        case IReadManyCommand<T> command:
-                        {
-                            var items = command.Execute(dbContext);
-                            foreach (var item in items)
+                        case IReadManyEntitiesAsyncCommand<T> asyncCmd:
                             {
-                                results.Add(item);
+                                var items = await asyncCmd.ExecuteAsync();
+                                foreach (var item in items)
+                                {
+                                    results.Add(item);
+                                }
+                                break;
                             }
-
-                            break;
-                        }
-                        case IReadSingleCommand<T> single:
+                        case IReadSingleEntityCommand<T> single:
                         {
-                            var item = single.Execute(dbContext);
+                            var item = single.Execute();
                             if (item != null)
                                 results.Add(item);
                             break;
                         }
+                        case IReadSingleEntityAsyncCommand<T> singleAsync:
+                            {
+                                var item = await singleAsync.ExecuteAsync();
+                                if (item != null)
+                                    results.Add(item);
+
+                                break;
+                            }
+                        default:
+                            continue; //skip bad commands
                     }
                 }
                 transaction.Commit();

@@ -1,24 +1,26 @@
 namespace Sisusa.Data.Contracts
 {
-
-
     /// <summary>
-    /// Represents a write command that performs an operation on a data source context.
+    /// Represents a command that performs a write operation synchronously.
     /// </summary>
     public interface IWriteCommand
     {
         /// <summary>
-        /// Executes the write command asynchronously against the specified data source context.
+        /// Executes the write operation.
         /// </summary>
-        /// <param name="context">The data source context where the operation will be performed.</param>
-        /// <returns>A task that represents the asynchronous operation.</returns>
-        public Task ExecuteAsync(IDataSourceContext context);
+        void Execute();
+    }
 
+    /// <summary>
+    /// Represents a command that performs a write operation asynchronously.
+    /// </summary>
+    public interface IWriteAsyncCommand
+    {
         /// <summary>
-        /// Executes the write command synchronously against the specified data source context.
+        /// Executes the write operation asynchronously.
         /// </summary>
-        /// <param name="context">The data source context where the operation will be performed.</param>
-        public void Execute(IDataSourceContext context);
+        /// <returns>A task representing the asynchronous operation.</returns>
+        Task ExecuteAsync();
     }
 
 }

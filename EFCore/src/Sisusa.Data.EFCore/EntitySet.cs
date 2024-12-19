@@ -1,7 +1,8 @@
 using System.Collections;
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Sisusa.Data.Contracts;
 
 namespace Sisusa.Data.EFCore;
@@ -13,7 +14,7 @@ namespace Sisusa.Data.EFCore;
 /// <param name="wrappedSet">The underlying <see cref="DbSet{TEntity}"/> to  use</param>
 /// <param name="sourceContext">The <see cref="IDataSourceContext"/> that handles the database operations.</param>
 /// <inheritdoc />
-public class EntitySet<T>(DbSet<T> wrappedSet, IDataSourceContext sourceContext) : IQueryable<T>, IEntityCollection<T> where T: class 
+public class EntitySet<T>(DbSet<T> wrappedSet, DbContext sourceContext) : IQueryable<T>, IEntityCollection<T> where T: class 
 {
     
     public async Task<T> SingleAsync()
@@ -150,138 +151,54 @@ public class EntitySet<T>(DbSet<T> wrappedSet, IDataSourceContext sourceContext)
 }
 
 /// <summary>
-/// Provides extension methods for working with <see cref="EntitySet{T}"/> that simplify querying and entity management.
+/// Provides extension methods for querying <see cref="EntitySet{TEntity}"/>.
 /// </summary>
-public static class EntitySetExtensions
+public static class EntitySetQueryExtensions
 {
     /// <summary>
-    /// Attaches the specified entity to the context in the <see cref="EntitySet{T}"/>.
-    /// The entity's state is set to <see cref="EntityState.Unchanged"/>.
+    /// Retrieves all entities from the specified <see cref="EntitySet{TEntity}"/>.
     /// </summary>
-    /// <typeparam name="TEntity">The type of the entity to attach.</typeparam>
-    /// <param name="eSet">The <see cref="EntitySet{T}"/> to attach the entity to.</param>
-    /// <param name="entity">The entity to attach.</param>
-    /// <returns>The <see cref="EntityEntry{TEntity}"/> for the entity.</returns>
-    /// <exception cref="ArgumentNullException">Thrown if <paramref name="entity"/> is <c>null</c>.</exception>
-    public static EntityEntry<TEntity> Attach<TEntity>(this EntitySet<TEntity> eSet, TEntity entity) where TEntity : class
+    /// <typeparam name="TEntity">The type of the entities in the set.</typeparam>
+    /// <param name="source">The <see cref="EntitySet{TEntity}"/> to query.</param>
+    /// <returns>An <see cref="IEnumerable{T}"/> containing all entities in the set.</returns>
+    public static IEnumerable<TEntity> GetAll<TEntity>(this EntitySet<TEntity> source) where TEntity : class
     {
-        var dbSet = eSet.GetWrappedSet();
-        return dbSet.Attach(entity);
+        // Placeholder implementation
+        return source;
     }
 
     /// <summary>
-    /// Returns the maximum value of a given property for entities in the <see cref="EntitySet{T}"/>.
+    /// Asynchronously retrieves all entities from the specified <see cref="EntitySet{TEntity}"/>.
     /// </summary>
-    /// <typeparam name="TEntity">The type of entity.</typeparam>
-    /// <typeparam name="TMax">The type of the property to calculate the maximum value for.</typeparam>
-    /// <param name="eSource">The source <see cref="EntitySet{T}"/> to perform the operation on.</param>
-    /// <param name="selector">The expression to select the property to calculate the maximum value for.</param>
-    /// <returns>The maximum value of the specified property.</returns>
-    public static TMax? Max<TEntity, TMax>(this EntitySet<TEntity> eSource, Expression<Func<TEntity, TMax>> selector) where TEntity : class
+    /// <typeparam name="TEntity">The type of the entities in the set.</typeparam>
+    /// <param name="source">The <see cref="EntitySet{TEntity}"/> to query.</param>
+    /// <returns>A task representing the asynchronous operation, containing all entities in the set.</returns>
+    public static async Task<IEnumerable<TEntity>> GetAllAsync<TEntity>(this EntitySet<TEntity> source) where TEntity : class
     {
-        return eSource.GetWrappedSet().Max(selector);
+        return await source.ToListAsync();
     }
 
     /// <summary>
-    /// Returns the minimum value of a given property for entities in the <see cref="EntitySet{T}"/>.
+    /// Asynchronously retrieves a single entity by its identifier(s) from the specified <see cref="EntitySet{TEntity}"/>.
     /// </summary>
-    /// <typeparam name="TEntity">The type of entity.</typeparam>
-    /// <typeparam name="TMin">The type of the property to calculate the minimum value for.</typeparam>
-    /// <param name="eSource">The source <see cref="EntitySet{T}"/> to perform the operation on.</param>
-    /// <param name="selector">The expression to select the property to calculate the minimum value for.</param>
-    /// <returns>The minimum value of the specified property.</returns>
-    public static TMin? Min<TEntity, TMin>(this EntitySet<TEntity> eSource, Expression<Func<TEntity, TMin>> selector) where TEntity : class
+    /// <typeparam name="TEntity">The type of the entity in the set.</typeparam>
+    /// <param name="source">The <see cref="EntitySet{TEntity}"/> to query.</param>
+    /// <param name="id">The identifier(s) of the entity to retrieve.</param>
+    /// <returns>A task representing the asynchronous operation, containing the entity if found, or <see langword="null"/> if not found.</returns>
+    public static async Task<TEntity?> GetByIdAsync<TEntity>(this EntitySet<TEntity> source, params object[] id) where TEntity : class
     {
-        return eSource.GetWrappedSet().Min(selector);
+        return await source.FindAsync(id);
     }
 
     /// <summary>
-    /// Asynchronously returns the maximum value of a given property for entities in the <see cref="EntitySet{T}"/>.
+    /// Asynchronously retrieves entities that match the specified predicate from the <see cref="EntitySet{TEntity}"/>.
     /// </summary>
-    /// <typeparam name="TEntity">The type of entity.</typeparam>
-    /// <typeparam name="TMax">The type of the property to calculate the maximum value for.</typeparam>
-    /// <param name="eSource">The source <see cref="EntitySet{T}"/> to perform the operation on.</param>
-    /// <param name="selector">The expression to select the property to calculate the maximum value for.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains the maximum value of the specified property.</returns>
-    public static async Task<TMax?> MaxAsync<TEntity, TMax>(this EntitySet<TEntity> eSource, Expression<Func<TEntity, TMax>> selector) where TEntity : class
+    /// <typeparam name="TEntity">The type of the entities in the set.</typeparam>
+    /// <param name="source">The <see cref="EntitySet{TEntity}"/> to query.</param>
+    /// <param name="predicate">An expression to test each entity for a condition.</param>
+    /// <returns>A task representing the asynchronous operation, containing a collection of entities that satisfy the condition.</returns>
+    public static async Task<IEnumerable<TEntity>> GetWhereAsync<TEntity>(this EntitySet<TEntity> source, Expression<Func<TEntity, bool>> predicate) where TEntity : class
     {
-        return await eSource.GetWrappedSet().MaxAsync(selector);
-    }
-
-    /// <summary>
-    /// Asynchronously returns the minimum value of a given property for entities in the <see cref="EntitySet{T}"/>.
-    /// </summary>
-    /// <typeparam name="TEntity">The type of entity.</typeparam>
-    /// <typeparam name="TMin">The type of the property to calculate the minimum value for.</typeparam>
-    /// <param name="eSource">The source <see cref="EntitySet{T}"/> to perform the operation on.</param>
-    /// <param name="selector">The expression to select the property to calculate the minimum value for.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains the minimum value of the specified property.</returns>
-    public static async Task<TMin?> MinAsync<TEntity, TMin>(this EntitySet<TEntity> eSource, Expression<Func<TEntity, TMin>> selector) where TEntity : class
-    {
-        return await eSource.GetWrappedSet().MinAsync(selector);
-    }
-
-    /// <summary>
-    /// Asynchronously calculates the sum of a given decimal property for entities in the <see cref="EntitySet{T}"/>.
-    /// </summary>
-    /// <typeparam name="TEntity">The type of entity.</typeparam>
-    /// <param name="source">The source <see cref="EntitySet{T}"/> to perform the operation on.</param>
-    /// <param name="selector">The expression to select the property to sum.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains the sum of the selected property.</returns>
-    public static async Task<decimal> SumAsync<TEntity>(this EntitySet<TEntity> source, Expression<Func<TEntity, decimal>> selector) where TEntity : class
-    {
-        return await source.GetWrappedSet().SumAsync(selector);
-    }
-
-    /// <summary>
-    /// Calculates the sum of a given decimal property for entities in the <see cref="EntitySet{T}"/>.
-    /// </summary>
-    /// <typeparam name="TEntity">The type of entity.</typeparam>
-    /// <param name="source">The source <see cref="EntitySet{T}"/> to perform the operation on.</param>
-    /// <param name="selector">The expression to select the property to sum.</param>
-    /// <returns>The sum of the selected property.</returns>
-    public static decimal Sum<TEntity>(this EntitySet<TEntity> source, Expression<Func<TEntity, decimal>> selector) where TEntity : class
-    {
-        return source.GetWrappedSet().Sum(selector);
-    }
-
-    /// <summary>
-    /// Calculates the average value of a given double property for entities in the <see cref="EntitySet{T}"/>.
-    /// </summary>
-    /// <typeparam name="TEntity">The type of entity.</typeparam>
-    /// <param name="source">The source <see cref="EntitySet{T}"/> to perform the operation on.</param>
-    /// <param name="selector">The expression to select the property to calculate the average value for.</param>
-    /// <returns>The average value of the selected property.</returns>
-    public static double Average<TEntity>(this EntitySet<TEntity> source, Expression<Func<TEntity, double>> selector) where TEntity : class
-    {
-        return source.GetWrappedSet().Average(selector);
-    }
-
-    /// <summary>
-    /// Asynchronously calculates the average value of a given double property for entities in the <see cref="EntitySet{T}"/>.
-    /// </summary>
-    /// <typeparam name="TEntity">The type of entity.</typeparam>
-    /// <param name="source">The source <see cref="EntitySet{T}"/> to perform the operation on.</param>
-    /// <param name="selector">The expression to select the property to calculate the average value for.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains the average value of the selected property.</returns>
-    public static async Task<double> AverageAsync<TEntity>(this EntitySet<TEntity> source, Expression<Func<TEntity, double>> selector) where TEntity : class
-    {
-        ArgumentNullException.ThrowIfNull(selector, nameof(selector));
-        return await source.GetWrappedSet().AverageAsync(selector);
-    }
-
-    /// <summary>
-    /// Retrieves the <see cref="EntityEntry{TEntity}"/> for a specified entity.
-    /// </summary>
-    /// <typeparam name="TEntity">The type of the entity.</typeparam>
-    /// <param name="source">The <see cref="EntitySet{T}"/> to perform the operation on.</param>
-    /// <param name="entity">The entity whose <see cref="EntityEntry{TEntity}"/> is to be retrieved.</param>
-    /// <returns>The <see cref="EntityEntry{TEntity}"/> for the specified entity.</returns>
-    /// <exception cref="ArgumentNullException">Thrown if <paramref name="entity"/> is <c>null</c>.</exception>
-    public static EntityEntry<TEntity> Entry<TEntity>(this EntitySet<TEntity> source, TEntity entity) where TEntity : class
-    {
-        ArgumentNullException.ThrowIfNull(entity, nameof(entity));
-        return source.GetWrappedSet().Entry(entity);
+        return await source.Where(predicate).ToListAsync();
     }
 }
-
