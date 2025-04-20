@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Version>2.0.1</Version>
+    <Title>Contracts for Data access - can be implemented regardless of storage mechanism(can be implemented to wrap NoSQL, Web, SQL, Web Functions etc.)</Title>
+    <Description>A simple library of interfaces used for data access. Tries to unify data access so that even if the underlying storage changes the only changes are in the implementations(programming against an inferface). Sure, chances of having to change the underlying storage are slim but still.</Description>
+    <RepositoryUrl>https://github.com/itmathsteacher20/Sisusa.Data</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>Repository; Data Access</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Copyright>Copyright 2024, T. Dlamini</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Update="README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>
