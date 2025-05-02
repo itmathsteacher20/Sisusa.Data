@@ -2,29 +2,47 @@
 using Sisusa.Data.Contracts;
 using System.Linq.Expressions;
 using Sisusa.Data.EFCore.Exceptions;
+using System.Reflection;
 
 namespace Sisusa.Data.EFCore
 {
     public class BaseRepository<TEntity, TId> : IRepository<TEntity, TId> where TEntity : class
     {    
-        private readonly EntitySet<TEntity> _entities;
+        private readonly DbSet<TEntity> _entities;
              
-        private readonly DataSourceContext _context;
+        private readonly EFDataSourceContext _context;
 
         private readonly Func<TId, TEntity> _createProxy;
         
         public BaseRepository(
-            DataSourceContext dataSourceContext,
+            EFDataSourceContext dataSourceContext,
             Func<TId, TEntity> createProxy
             )
         {
             _context = dataSourceContext ?? 
                        throw new ArgumentNullException(nameof(dataSourceContext));
-            _entities = _context.Entities<TEntity>();
+            _entities = _context.Set<TEntity>();
             
             _createProxy = createProxy ?? throw new ArgumentNullException(nameof(createProxy));
         }
-        
+
+
+        private PropertyInfo GetIdProperty()
+        {
+            bool IsPossibleId(PropertyInfo p)
+            {
+                return p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase) ||
+                p.Name.Equals($"{typeof(TEntity).Name}Id", StringComparison.OrdinalIgnoreCase);
+            }
+
+            var idProperty = typeof(TEntity).GetProperties()
+                .FirstOrDefault(p => IsPossibleId(p));
+
+            return idProperty == null ? 
+                throw new InvalidOperationException($"No Id property found for {typeof(TEntity).Name}") :
+                idProperty;
+        }
+
         public async Task AddNewAsync(TEntity entity)
         {
             ArgumentNullException.ThrowIfNull(entity, nameof(entity));
@@ -78,11 +96,9 @@ namespace Sisusa.Data.EFCore
         public async Task DeleteByIdAsync(TId id)
         {
             ArgumentNullException.ThrowIfNull(id, nameof(id));
-            if (!await HasByIdAsync(id))
-                throw new EntityNotFoundException();
-            
-            await _entities
-                .RemoveAsync(_createProxy(id));
+            var existing = await FindByIdAsync(id) ?? throw new EntityNotFoundException();
+            _context.Entry(existing!).State = EntityState.Deleted;
+            await _context.SaveChangesAsync();
         }
 
         public async Task<ICollection<TEntity>> FindAllAsync()
@@ -117,7 +133,8 @@ namespace Sisusa.Data.EFCore
         public async Task UpdateAsync(TEntity entity)
         {
             ArgumentNullException.ThrowIfNull(entity);
-            await _entities.UpdateAsync(entity);
+            _entities.Update(entity);
+            await _context.SaveChangesAsync();
         }
     }
 }

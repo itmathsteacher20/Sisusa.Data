@@ -71,6 +71,24 @@ public class EntitySet<T>(DbSet<T> wrappedSet, DbContext sourceContext) : IQuery
 
     public async Task AddRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
     {
+        using (var transaction = await sourceContext.Database.BeginTransactionAsync(cancellationToken))
+        {
+            try
+            {   
+                foreach (var entity in entities)
+                {
+                    wrappedSet.Add(entity);
+                }
+                await sourceContext.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+            } 
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
         await wrappedSet.AddRangeAsync(entities, cancellationToken);
         await sourceContext.SaveChangesAsync(cancellationToken);
     }
@@ -139,6 +157,11 @@ public class EntitySet<T>(DbSet<T> wrappedSet, DbContext sourceContext) : IQuery
     IEnumerator IEnumerable.GetEnumerator()
     {
         return GetEnumerator();
+    }
+
+    public Task RemoveRangeAsync(IEnumerable<T> entities)
+    {
+        throw new NotImplementedException();
     }
 
     public Type ElementType => typeof(T);

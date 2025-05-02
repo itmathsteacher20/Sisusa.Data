@@ -12,22 +12,52 @@ The repository pattern abstracts data access logic, providing a consistent and r
 ### Key Components
 1. **`SimpleRepository`**
     - Provides basic CRUD and query operations.
-    - Uses `EntitySet` to interact with `DbSet`.
+    - Abstraction over `DbSet`.
 
 2. **`BaseRepository`**
     - Extends `SimpleRepository` with additional functionality like managing proxy entities.
-    - Supports creation of proxy objects using a `Func<TId, TEntity>` delegate.
+    - Supports creation of proxy objects using a `Func<TId, TEntity>` delegate to simplify some operations `Delete`, `Update`.
 
 3. **`DataSourceContext`**
     - Extends `DbContext` to manage entity sets (`EntitySet<T>`).
-    - Supports transaction management.
+    - Supports transaction management ;
+        bypasses the `Database` call, so that instead of
+    ```csharp
+        var transaction = await context.Database.BeginTransactionAsync();
+     ````
+      we can simply do: 
+      ```csharp
+        var transaction = await context.BeginTransactionAsync();
+      ```
+      Remember, the goal is to have a shared `interface` that can work for *any* data source (SQL, NoSQL, File, etc.) some of which may not have the concept of a `Database`.
 
 4. **`Query<TEntity>`**
     - Provides a fluent interface for building queries with filtering, ordering, and projections.
+    - This is SQL/EF specific and is simply a wrapper around functionality that EF already provides:
+     ```csharp
+         //EF native
+         var membersOver20 = await context.Set<ClubMembers>()
+             .Where(p => (TimeService.CurrentYear - p.DateOfBirth.Year) > 20)
+             .OrderBy(p => p.Id)
+             .ThenBy(p => p.Name)
+             .Include(p => p.PaymentInfo).ToList();
+          //using the Query class  becomes
+          var membersOver20 = await Query<ClubMembers>.UsingContext(context).
+              .Where(p => (TimeService.CurrentYear - p.DateOfBirth.Year) > 20)
+              .OrderBy(p => p.Id)
+              .ThenBy(p => p.Name)
+              .Include(p => p.PaymentInfo).ToListAsync();
+          //aim is to have more verbose and readable code
+
+      ```
 
 5. **`EntitySet<T>`**
     - An implementation of `IEntityCollection<T>` for use with an EF context, enabling advanced querying and entity management.
-
+    ```csharp
+        var members = context.Entities<ClubMembers>();>
+        //same as 
+        var members = context.Set<ClubMembers>();
+    ```
 ---
 
 ## Prerequisites
@@ -36,6 +66,7 @@ The repository pattern abstracts data access logic, providing a consistent and r
 Ensure you have the following packages installed:
 - Microsoft.EntityFrameworkCore
 - Microsoft.EntityFrameworkCore.SqlServer (or other database provider)
+
 
 ### Setup
 Configure the `DataSourceContext` in your `Startup.cs` or `Program.cs` file:

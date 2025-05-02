@@ -4,6 +4,7 @@ namespace Sisusa.Data.Contracts
 {
     /// <summary>
     /// Represents a collection of entities.
+    /// 
     /// </summary>
     /// <typeparam name="TEntity">The type of the entity.</typeparam>
     public interface IEntityCollection<TEntity>  where TEntity : class
@@ -132,6 +133,14 @@ namespace Sisusa.Data.Contracts
         /// </summary>
         /// <param name="entities">The entities to remove.</param>
         public void RemoveRange(IEnumerable<TEntity> entities);
+
+
+        /// <summary>
+        /// Asynchronously removes a range of entities from the collection
+        /// </summary>
+        /// <param name="entities">The entities to remove</param>
+        /// <returns>Task representing the async operation.</returns>
+        public Task RemoveRangeAsync(IEnumerable<TEntity> entities);
 
         /// <summary>
         /// Updates an entity in the collection asynchronously.

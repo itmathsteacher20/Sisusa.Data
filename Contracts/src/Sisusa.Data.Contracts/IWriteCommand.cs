@@ -8,8 +8,8 @@ namespace Sisusa.Data.Contracts
         /// <summary>
         /// Executes the write operation.
         /// </summary>
-        void Execute();
-    }
+        void Execute(IDataSourceContext dataSource);
+    }                                     
 
     /// <summary>
     /// Represents a command that performs a write operation asynchronously.
@@ -20,7 +20,7 @@ namespace Sisusa.Data.Contracts
         /// Executes the write operation asynchronously.
         /// </summary>
         /// <returns>A task representing the asynchronous operation.</returns>
-        Task ExecuteAsync();
+        Task ExecuteAsync(IDataSourceContext dataSourceContext);
     }
 
 }

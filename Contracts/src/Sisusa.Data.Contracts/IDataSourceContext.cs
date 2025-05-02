@@ -28,18 +28,4 @@ public interface IDataSourceContext
     /// <returns>A <see cref="IEntityCollection{TEntity}"/> of the entities in the data source.</returns>
     //IEntityCollection<T> Entities<T>() where T : class;
 
-   /// <summary>
-   /// Begins a Transaction in the underlying data store.
-   /// </summary>
-   /// <returns>The started transaction, for further transaction work.</returns>
-    IDbTransaction BeginTransaction();
-
-   /// <summary>
-   /// <see cref="BeginTransaction"/>
-   /// Asynchronously starts a Transaction in the underlying data store.
-   /// </summary>
-   /// <returns>
-   /// A Task containing the opened Transaction.
-   /// </returns>
-    Task<IDbTransaction> BeginTransactionAsync();
 }

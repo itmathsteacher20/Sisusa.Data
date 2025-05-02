@@ -13,11 +13,11 @@ namespace Sisusa.Data.EFCore;
 /// <typeparam name="TId">The key type</typeparam>
 public class SimpleRepository<TEntity, TId> : IRepository<TEntity, TId> where TEntity : class
 {
-    private readonly DataSourceContext _context;
+    private readonly EFDataSourceContext _context;
     
     private readonly EntitySet<TEntity> _dbSet;
     
-    public SimpleRepository(DataSourceContext dbContext)
+    public SimpleRepository(EFDataSourceContext dbContext)
     {
         _context = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         

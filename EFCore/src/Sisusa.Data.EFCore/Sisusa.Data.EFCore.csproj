@@ -13,12 +13,14 @@
 Personal projects.</Description>
     <Title>An EF core based Repository pattern implementation you do not need.</Title>
     <Copyright>Copyright 2024, T.Dlamini</Copyright>
-	<Version>1.2.1</Version>
+	<Version>3.0.0</Version>
+	<PackageReleaseNotes>Breaking updates - reduced the layers over EF and used raw EF where possible. e.g, methods  expecting EntitySet&lt;T&gt; now work with DbSet&lt;T&gt;. Added dependency to EFCore.BulkExtensions - haven't got around to making that work yet. Streamlined the BatchInsertManager(and renamed)</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
-    <PackageReference Include="Sisusa.Data.Contracts" Version="1.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.4" />
+    <PackageReference Include="Sisusa.Data.Contracts" Version="4.0.0" />
   </ItemGroup>
 
   <ItemGroup>
