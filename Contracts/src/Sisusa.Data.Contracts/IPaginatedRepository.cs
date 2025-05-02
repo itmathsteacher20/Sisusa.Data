@@ -15,8 +15,9 @@ public interface IPaginatedRepository<T, in TId> : IRepository<T, TId> where T :
     /// </summary>
     /// <param name="page">The current page number to retrieve.</param>
     /// <param name="pageSize">The number of records per page.</param>
+    /// <param name="cancellationToken"> Token to observe while performing the operation </param>
     /// <returns>A collection of records for the specified page.</returns>
-    Task<ICollection<T>> FindAllWithPagingAsync(int page, int pageSize);
+    Task<ICollection<T>> FindAllWithPagingAsync(int page, int pageSize, CancellationToken cancellationToken = default);
 }
 
 
@@ -36,11 +37,12 @@ public interface ISearchableRepository<T, in TId> : IRepository<T, TId> where T 
     /// A lambda expression used to filter the entities. 
     /// This is evaluated in combination with the search term.
     /// </param>
+    /// <param name="cancellationToken"> Token to observe while the search operation proceeds.</param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains a collection 
     /// of entities that match the search term and satisfy the predicate.
     /// </returns>
-    Task<ICollection<T>> SearchAsync(string searchTerm, Expression<Func<T, bool>> predicate);
+    Task<ICollection<T>> SearchAsync(string searchTerm, Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Searches for entities that match the specified search term within the specified properties.

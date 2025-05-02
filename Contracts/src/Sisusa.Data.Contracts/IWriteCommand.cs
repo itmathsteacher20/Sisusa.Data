@@ -19,8 +19,10 @@ namespace Sisusa.Data.Contracts
         /// <summary>
         /// Executes the write operation asynchronously.
         /// </summary>
+        /// <param name="dataSourceContext">The data source against which to execute the command.</param>
+        /// <param name="cancellationToken"> A cancellation token to observe while waiting for the task to complete.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        Task ExecuteAsync(IDataSourceContext dataSourceContext);
+        Task ExecuteAsync(IDataSourceContext dataSourceContext, CancellationToken cancellationToken = default);
     }
 
 }

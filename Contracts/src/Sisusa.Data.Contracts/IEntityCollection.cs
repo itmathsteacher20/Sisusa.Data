@@ -13,21 +13,24 @@ namespace Sisusa.Data.Contracts
         /// <summary>
         /// Finds a single item from the collection asynchronously.
         /// </summary>
+        /// <param name="cancellationToken" > A cancellation token to cancel the operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the single entity.</returns>
-        public Task<TEntity> SingleAsync();
+        public Task<TEntity> SingleAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Determines whether any elements in the collection satisfy a condition asynchronously.
         /// </summary>
         /// <param name="predicate">A function to test each element for a condition. If null, the method checks if the collection contains any elements.</param>
+        /// <param name="cancellationToken" > A cancellation token to cancel the operation.</param> 
         /// <returns>A task that represents the asynchronous operation. The task result contains <c>true</c> if any elements match the condition; otherwise, <c>false</c>.</returns>
-        public Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate);
+        public Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Determines whether the collection contains any elements asynchronously.
         /// </summary>
+        /// <param name="cancellationToken"> A cancellation token to cancel the operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains <c>true</c> if the collection contains any elements; otherwise, <c>false</c>.</returns>
-        public Task<bool> AnyAsync();
+        public Task<bool> AnyAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Filters the collection based on a predicate asynchronously.
@@ -40,27 +43,31 @@ namespace Sisusa.Data.Contracts
         /// Returns the first element of the collection that satisfies a condition asynchronously.
         /// </summary>
         /// <param name="predicate">A function to test each element for a condition. If null, the method returns the first element.</param>
+        /// <param name="cancellationToken" > A cancellation token to cancel the operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the first element that matches the condition.</returns>
-        public Task<TEntity> FirstAsync(Expression<Func<TEntity, bool>> predicate);
+        public Task<TEntity> FirstAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Returns the first element of the collection asynchronously.
         /// </summary>
+        /// <param name="cancellationToken" > A cancellation token to cancel the operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the first element in the collection.</returns>
-        public Task<TEntity> FirstAsync();
+        public Task<TEntity> FirstAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Returns the first element of the collection that satisfies a condition or a default value if no such element is found asynchronously.
         /// </summary>
         /// <param name="predicate">A function to test each element for a condition. If null, the method returns the first element or default.</param>
+        /// <param name="cancellationToken" > A cancellation token to cancel the operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the first element that matches the condition, or the default value if no such element is found.</returns>
-        public Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate);
+        public Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Returns the first element of the collection or a default value if the collection is empty asynchronously.
         /// </summary>
+        /// <param name="cancellationToken" > A cancellation token to cancel the operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the first element, or the default value if the collection is empty.</returns>
-        public Task<TEntity?> FirstOrDefaultAsync();
+        public Task<TEntity?> FirstOrDefaultAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Returns all elements in the collection as an enumerable asynchronously.
@@ -71,14 +78,16 @@ namespace Sisusa.Data.Contracts
         /// <summary>
         /// Converts the collection to a list asynchronously.
         /// </summary>
+        /// <param name="cancellationToken" > A cancellation token to cancel the operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="List{TEntity}"/> of all elements in the collection.</returns>
-        public Task<List<TEntity>> ToListAsync();
+        public Task<List<TEntity>> ToListAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Counts the number of elements in the collection asynchronously.
         /// </summary>
+        /// <param name="cancellationToken"> A cancellation token to cancel the operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the number of elements in the collection.</returns>
-        public Task<int> CountAsync();
+        public Task<int> CountAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Counts the number of elements in the collection.
@@ -95,8 +104,9 @@ namespace Sisusa.Data.Contracts
         /// <summary>
         /// Counts the number of elements in the collection asynchronously as a long integer.
         /// </summary>
+        /// <param name="cancellationToken"> A cancellation token to cancel the operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the number of elements in the collection as a long integer.</returns>
-        public Task<long> LongCountAsync();
+        public Task<long> LongCountAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Adds an entity to the collection asynchronously.
@@ -139,8 +149,9 @@ namespace Sisusa.Data.Contracts
         /// Asynchronously removes a range of entities from the collection
         /// </summary>
         /// <param name="entities">The entities to remove</param>
+        /// <param name="cancellationToken" >Cancellation token to cancel the operation</param>
         /// <returns>Task representing the async operation.</returns>
-        public Task RemoveRangeAsync(IEnumerable<TEntity> entities);
+        public Task RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Updates an entity in the collection asynchronously.

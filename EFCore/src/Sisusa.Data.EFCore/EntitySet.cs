@@ -17,50 +17,50 @@ namespace Sisusa.Data.EFCore;
 public class EntitySet<T>(DbSet<T> wrappedSet, DbContext sourceContext) : IQueryable<T>, IEntityCollection<T> where T: class 
 {
     
-    public async Task<T> SingleAsync()
+    public async Task<T> SingleAsync(CancellationToken cancellationToken = default)
     {
-        return await  wrappedSet.SingleAsync();
+        return await  wrappedSet.SingleAsync(cancellationToken);
     }
 
-    public async Task<bool> AnyAsync(Expression<Func<T, bool>> predicate)
+    public async Task<bool> AnyAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)
     {
-        return await wrappedSet.AnyAsync(predicate);
+        return await wrappedSet.AnyAsync(predicate, cancellationToken);
     }
     
-    public async Task<bool> AnyAsync() => await wrappedSet.AnyAsync();
+    public async Task<bool> AnyAsync(CancellationToken cancellationToken = default) => await wrappedSet.AnyAsync(cancellationToken);
 
     public IQueryable<T> Where(Expression<Func<T, bool>> predicate)
     {
         return wrappedSet.Where(predicate);
     }
 
-    public async Task<T> FirstAsync(Expression<Func<T, bool>> predicate)
+    public async Task<T> FirstAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)
     {
-        return await wrappedSet.FirstAsync(predicate);
+        return await wrappedSet.FirstAsync(predicate, cancellationToken);
     }
     
-    public async Task<T> FirstAsync() => await wrappedSet.FirstAsync();
+    public async Task<T> FirstAsync(CancellationToken cancellationToken = default) => await wrappedSet.FirstAsync(cancellationToken);
 
-    public async Task<T?> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate)
+    public async Task<T?> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)
     {
-        return await wrappedSet.FirstOrDefaultAsync(predicate);
+        return await wrappedSet.FirstOrDefaultAsync(predicate, cancellationToken);
     }
     
-    public async Task<T?> FirstOrDefaultAsync() => await wrappedSet.FirstOrDefaultAsync();
+    public async Task<T?> FirstOrDefaultAsync(CancellationToken cancellationToken = default) => await wrappedSet.FirstOrDefaultAsync(cancellationToken);
 
     public IEnumerable<T> AsEnumerable()
     {
         return wrappedSet.AsEnumerable();
     }
 
-    public async Task<List<T>> ToListAsync()
+    public async Task<List<T>> ToListAsync(CancellationToken cancellationToken = default)
     {
-        return await wrappedSet.ToListAsync();
+        return await wrappedSet.ToListAsync(cancellationToken);
     }
 
-    public async Task<int> CountAsync()
+    public async Task<int> CountAsync(CancellationToken cancellationToken = default)
     {
-        return await wrappedSet.CountAsync();
+        return await wrappedSet.CountAsync(cancellationToken);
     }
 
     public async Task AddAsync(T entity, CancellationToken cancellationToken = default)
@@ -84,7 +84,7 @@ public class EntitySet<T>(DbSet<T> wrappedSet, DbContext sourceContext) : IQuery
             } 
             catch
             {
-                await transaction.RollbackAsync();
+                await transaction.RollbackAsync(cancellationToken);
                 throw;
             }
         }
@@ -118,9 +118,9 @@ public class EntitySet<T>(DbSet<T> wrappedSet, DbContext sourceContext) : IQuery
         return wrappedSet.LongCount();
     }
 
-    public async Task<long> LongCountAsync()
+    public async Task<long> LongCountAsync(CancellationToken cancellationToken = default)
     {
-        return await wrappedSet.LongCountAsync();
+        return await wrappedSet.LongCountAsync(cancellationToken);
     }
 
     public void RemoveRange(IEnumerable<T> entities)
@@ -128,6 +128,23 @@ public class EntitySet<T>(DbSet<T> wrappedSet, DbContext sourceContext) : IQuery
         wrappedSet.RemoveRange(entities); 
         sourceContext.SaveChanges();
     }
+
+    public async Task RemoveRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
+    {
+        foreach (var entity in entities)
+        {
+            var entityEntry = wrappedSet.Entry(entity);
+            // Check if the entity is already tracked
+            if (entityEntry.State == EntityState.Detached)
+            {
+                // Attach the entity to the context
+                wrappedSet.Attach(entity);
+            }
+            entityEntry.State = EntityState.Deleted;
+        }
+        await wrappedSet.ExecuteDeleteAsync(cancellationToken);
+    }
+
 
     public async Task UpdateAsync(T entity, CancellationToken cancellationToken = default)
     {

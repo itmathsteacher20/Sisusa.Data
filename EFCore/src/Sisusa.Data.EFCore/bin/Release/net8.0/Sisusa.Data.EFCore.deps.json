@@ -6,11 +6,11 @@
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v8.0": {
-      "Sisusa.Data.EFCore/3.0.0": {
+      "Sisusa.Data.EFCore/3.0.1": {
         "dependencies": {
           "Microsoft.EntityFrameworkCore": "9.0.4",
           "Microsoft.EntityFrameworkCore.Relational": "9.0.4",
-          "Sisusa.Data.Contracts": "4.0.0"
+          "Sisusa.Data.Contracts": "4.0.1"
         },
         "runtime": {
           "Sisusa.Data.EFCore.dll": {}
@@ -154,11 +154,11 @@
           }
         }
       },
-      "Sisusa.Data.Contracts/4.0.0": {
+      "Sisusa.Data.Contracts/4.0.1": {
         "runtime": {
           "lib/net8.0/Sisusa.Data.Contracts.dll": {
-            "assemblyVersion": "4.0.0.0",
-            "fileVersion": "4.0.0.0"
+            "assemblyVersion": "4.0.1.0",
+            "fileVersion": "4.0.1.0"
           }
         }
       },
@@ -173,7 +173,7 @@
     }
   },
   "libraries": {
-    "Sisusa.Data.EFCore/3.0.0": {
+    "Sisusa.Data.EFCore/3.0.1": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
@@ -269,12 +269,12 @@
       "path": "microsoft.extensions.primitives/9.0.4",
       "hashPath": "microsoft.extensions.primitives.9.0.4.nupkg.sha512"
     },
-    "Sisusa.Data.Contracts/4.0.0": {
+    "Sisusa.Data.Contracts/4.0.1": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-52a3zI6zFhsRVqUqEXYBrkkrzMcygPjFqjws5rd6RMM9apjaOFaTeZpaCJrFRSCvPLdFNyTC/9ViAUbvz0oQAA==",
-      "path": "sisusa.data.contracts/4.0.0",
-      "hashPath": "sisusa.data.contracts.4.0.0.nupkg.sha512"
+      "sha512": "sha512-2DDFvLRhBYHnDwo4sZIkfsHGBOfdxYgFOsoJqLk4f3tkjfHaYgC4t5gNatHmZkwWmfhhkj7+6XE13TkxwfVlTw==",
+      "path": "sisusa.data.contracts/4.0.1",
+      "hashPath": "sisusa.data.contracts.4.0.1.nupkg.sha512"
     },
     "System.Diagnostics.DiagnosticSource/9.0.4": {
       "type": "package",

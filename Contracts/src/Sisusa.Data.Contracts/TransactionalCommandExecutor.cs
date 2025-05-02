@@ -85,7 +85,7 @@ namespace Sisusa.Data.Contracts
         ///<summary>
         /// Executes all asynchronous write operations
         ///</summary>
-        private async Task PerformWritesAsync(IDataSourceContext dbContext)
+        private async Task PerformWritesAsync(IDataSourceContext dbContext, CancellationToken cancellationToken = default)
         {
             if (_writes.Count != 0)
             {
@@ -95,7 +95,7 @@ namespace Sisusa.Data.Contracts
             }
             foreach (var cmd in _asyncWrites)
             {
-                await cmd.ExecuteAsync(dbContext);
+                await cmd.ExecuteAsync(dbContext, cancellationToken);
             }
         }
 
@@ -119,15 +119,16 @@ namespace Sisusa.Data.Contracts
         /// </summary>
         /// <param name="dbContext">The database context to execute commands against.</param>
         /// <exception cref="Exception">Rethrows any exceptions encountered during execution.</exception>
+        /// <param name="cancellationToken">Token to observe cancellation requests.</param>
         /// <exception cref="ArgumentNullException">If given a null reference to dbContext.</exception>
-        public async Task TryExecuteWritesAsync(ITransactionalDataSourceContext dbContext)
+        public async Task TryExecuteWritesAsync(ITransactionalDataSourceContext dbContext, CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(dbContext, nameof(dbContext));
-            using var transact = await dbContext.BeginTransactionAsync();
+            using var transact = await dbContext.BeginTransactionAsync(cancellationToken);
             try
             {
-                await PerformWritesAsync(dbContext);
-                await dbContext.SaveChangesAsync(); //
+                await PerformWritesAsync(dbContext, cancellationToken);
+                await dbContext.SaveChangesAsync(cancellationToken); //
                 transact.Commit();
             }
             catch
