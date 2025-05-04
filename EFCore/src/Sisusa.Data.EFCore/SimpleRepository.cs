@@ -16,7 +16,12 @@ public class SimpleRepository<TEntity, TId> : IRepository<TEntity, TId> where TE
     private readonly EFDataSourceContext _context;
     
     private readonly EntitySet<TEntity> _dbSet;
-    
+
+    /// <summary>
+    /// The underlying dbcontext
+    /// </summary>
+    public EFDataSourceContext Context => _context;
+
     public SimpleRepository(EFDataSourceContext dbContext)
     {
         _context = dbContext ?? throw new ArgumentNullException(nameof(dbContext));

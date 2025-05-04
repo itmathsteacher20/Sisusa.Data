@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Sisusa.Data.Contracts;
 
 
 namespace Sisusa.Data.EFCore
@@ -99,7 +100,7 @@ namespace Sisusa.Data.EFCore
         /// <param name="cancellationToken">Token to observe while performing the operation.</param>
         /// <returns>Task representing state of the operation.</returns>
         /// <exception cref="InvalidOperationException">If nothing has been added yet.</exception>
-        public async Task ExecuteAsync(DbContext context, CancellationToken cancellationToken = default)
+        public async Task ExecuteAsync(IDataSourceContext context, CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(context);
 
@@ -109,8 +110,7 @@ namespace Sisusa.Data.EFCore
 
             if (_itemsToAdd.Count < bulkMinSize)
             {
-                context.AddRange(_itemsToAdd);
-                
+                context.AddAll (_itemsToAdd);
             }
             await context.SaveChangesAsync(cancellationToken);
             _itemsToAdd.Clear();

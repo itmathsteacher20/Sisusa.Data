@@ -49,6 +49,36 @@ public class EFDataSourceContext : DbContext, ITransactionalDataSourceContext
         var dbTransaction = Database.BeginTransaction(isolationLevel);
         return new EFDbTransaction(dbTransaction);
     }
+
+    public void AddAll(object[] entities)
+    {
+        AddRange(entities);
+    }
+
+    public void AddAll(IEnumerable<object> entities)
+    {
+        AddRange(entities);
+    }
+
+    public void RemoveAll(object[] entities)
+    {
+        RemoveRange(entities);
+    }
+
+    public void RemoveAll(IEnumerable<object> entities)
+    {
+        RemoveRange(entities);
+    }
+
+    public void UpdateAll(object[] entities)
+    {
+        UpdateRange(entities);
+    }
+
+    public void UpdateAll(IEnumerable<object> entities)
+    {
+        UpdateRange(entities);
+    }
 }
 
 public static class DbContextExtension

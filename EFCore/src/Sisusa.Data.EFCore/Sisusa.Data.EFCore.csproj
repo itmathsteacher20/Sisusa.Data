@@ -13,15 +13,15 @@
 Personal projects.</Description>
     <Title>An EF core based Repository pattern implementation you do not need.</Title>
     <Copyright>Copyright 2024, T.Dlamini</Copyright>
-	<Version>3.0.1</Version>
-	<PackageReleaseNotes>UserDoc Strings
-CancellationToken added to most async methods</PackageReleaseNotes>
+	<Version>4.1.0</Version>
+	<PackageReleaseNotes>Added `AddAll, UpdateAll, DeleteAll` methods  directly to context.
+Swapped out `DbContext` for `IDataSourceContext` in the `InsertSequencer`'s `ExecuteAsync` method</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.4" />
-    <PackageReference Include="Sisusa.Data.Contracts" Version="4.0.1" />
+    <PackageReference Include="Sisusa.Data.Contracts" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup>

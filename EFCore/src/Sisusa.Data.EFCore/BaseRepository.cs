@@ -13,7 +13,12 @@ namespace Sisusa.Data.EFCore
         private readonly EFDataSourceContext _context;
 
         private readonly Func<TId, TEntity> _createProxy;
-        
+
+        /// <summary>
+        /// The underlying dbcontext
+        /// </summary>
+        public EFDataSourceContext Context => _context;
+
         public BaseRepository(
             EFDataSourceContext dataSourceContext,
             Func<TId, TEntity> createProxy
